@@ -7,17 +7,27 @@ To create the project layout, we can first create the ~./bug.c~ file which produ
 
 ~./bug.c~
 #+begin_src c :tangle ./bug.c
-unsigned int b = 0x1194D7FF;
-int a[6] = {1, 1, 1, 1, 1, 1};
+volatile unsigned int g = 0;
+int a[256] = {0};
+int c = 0;
+
+void d(char b) {
+  c = (c & 4095) ^ a[(c ^ b) & 15];
+}
+
+void e(long f) {
+  d(f); d(f >> 8); d(f >> 16); d(f >> 24);
+  d(f >> 32); d(f >> 40); d(f >> 48);
+}
 
 int result() {
-    for (int c = 0; c < 2; c++)
-        b = b >> a[c];
-    return b;
+  for (int i = 0; i < 56; i++)
+    a[i] = i;
+  e(g);
+  e(-2L);
+  return c;
 }
 #+end_src
-
-The program repeatedly shifts a large integer value ~b~ right by the values stored in array ~a~.  Vivado HLS returns ~0x006535FF~, but the result returned by GCC (and subsequently confirmed manually to be the correct one) is ~0x046535FF~.
 
 We then have to generate a main function to provide the golden output.  We first write the following driver into ~./bug_driver.c~ which contains the main function that generates the checksum.
 
@@ -110,18 +120,18 @@ vivado_hls -f vivado.tcl | tail -n24
 
 #+RESULTS:
 #+begin_src sh
-INFO: [Common 17-206] Exiting xsim at Fri Oct  2 16:10:49 2020...
+INFO: [Common 17-206] Exiting xsim at Fri Oct  2 16:32:50 2020...
 INFO: [COSIM 212-316] Starting C post checking ...
 1c1
-< checksum = 6535FF
+< checksum = 0
 ---
-> checksum = 46535FF
-Verilog result is 6535FF
-C output:checksum = 46535FF
+> checksum = F
+Verilog result is 0
+C output:checksum = F
 Comparing against output data
-,*******************************************
+*******************************************
 FAIL: Output DOES NOT match the golden output
-,*******************************************
+*******************************************
 ERROR: [COSIM 212-361] C TB post check failed, nonzero return value '1'.
 ERROR: [COSIM 212-4] *** C/RTL co-simulation finished: FAIL ***
 INFO: [COSIM 212-211] II is measurable only when transaction number is greater than 1 in RTL simulation. Otherwise, they will be marked as all NA. If user wants to calculate them, please make sure there are at least 2 transactions in RTL simulation.
@@ -132,6 +142,6 @@ command 'ap_source' returned error code
     invoked from within
 "uplevel \#0 [list source $arg] "
 
-INFO: [HLS 200-112] Total elapsed time: 42.76 seconds; peak allocated memory: 80.380 MB.
-INFO: [Common 17-206] Exiting vivado_hls at Fri Oct  2 16:10:49 2020...
+INFO: [HLS 200-112] Total elapsed time: 43.31 seconds; peak allocated memory: 92.524 MB.
+INFO: [Common 17-206] Exiting vivado_hls at Fri Oct  2 16:32:51 2020...
 #+end_src
