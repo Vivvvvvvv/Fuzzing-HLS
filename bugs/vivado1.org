@@ -107,3 +107,31 @@ Then we can run the ~vivado_hls~ command to run Vivado HLS and check for the bug
 #+begin_src sh :exports both :results code
 vivado_hls -f vivado.tcl | tail -n24
 #+end_src
+
+#+RESULTS:
+#+begin_src sh
+INFO: [Common 17-206] Exiting xsim at Fri Oct  2 16:10:49 2020...
+INFO: [COSIM 212-316] Starting C post checking ...
+1c1
+< checksum = 6535FF
+---
+> checksum = 46535FF
+Verilog result is 6535FF
+C output:checksum = 46535FF
+Comparing against output data
+,*******************************************
+FAIL: Output DOES NOT match the golden output
+,*******************************************
+ERROR: [COSIM 212-361] C TB post check failed, nonzero return value '1'.
+ERROR: [COSIM 212-4] *** C/RTL co-simulation finished: FAIL ***
+INFO: [COSIM 212-211] II is measurable only when transaction number is greater than 1 in RTL simulation. Otherwise, they will be marked as all NA. If user wants to calculate them, please make sure there are at least 2 transactions in RTL simulation.
+command 'ap_source' returned error code
+    while executing
+"source vivado.tcl"
+    ("uplevel" body line 1)
+    invoked from within
+"uplevel \#0 [list source $arg] "
+
+INFO: [HLS 200-112] Total elapsed time: 42.76 seconds; peak allocated memory: 80.380 MB.
+INFO: [Common 17-206] Exiting vivado_hls at Fri Oct  2 16:10:49 2020...
+#+end_src
