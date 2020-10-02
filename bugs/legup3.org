@@ -1,0 +1,57 @@
+#+title: LegUp Crash
+#+author: Yann Herklotz
+
+The following C code was found to crash LegUp 4.0 and 7.5.
+
+~./bug.c~
+#+begin_src c :tangle ./bug.c
+int a[2][2][1] = {{{0},{1}},{{0},{0}}};
+
+int main() { a[0][1][0] = 1; }
+#+end_src
+
+To reproduce the bug, it has to point to the main ~Makefile~ in the examples folder in LegUp (~LEGUP_EXAMPLES~).
+
+~./Makefile~
+#+begin_src makefile :tangle ./Makefile
+NAME := bug
+NO_INLINE := 1
+LEGUP_EXAMPLES := ..
+include $(LEGUP_EXAMPLES)/Makefile.common
+#+end_src
+
+Then the bug can be reproduced by running ~make~, which returns the following assertion error.
+
+#+begin_src sh :tangle ./run_bug.sh :exports both :results code
+make >/dev/null
+#+end_src
+
+#+RESULTS:
+#+begin_src sh
+llc: utils.cpp:453: unsigned int legup::getBitWidth(const llvm::Type*): Assertion `size > 0' failed.
+0  llc             0x0000564d07ac55b2 llvm::sys::PrintStackTrace(_IO_FILE*) + 34
+1  llc             0x0000564d07ac4da4
+2  libpthread.so.0 0x00007fef25e5b730
+3  libc.so.6       0x00007fef259127bb gsignal + 267
+4  libc.so.6       0x00007fef258fd535 abort + 289
+5  libc.so.6       0x00007fef258fd40f
+6  libc.so.6       0x00007fef2590b102
+7  llc             0x0000564d06b79571
+8  llc             0x0000564d06b723bf legup::RAM::initializeArray(llvm::Constant const*) + 3487
+9  llc             0x0000564d06b73268 legup::RAM::initialize() + 88
+10 llc             0x0000564d06b73491 legup::RAM::buildInitializer() + 65
+11 llc             0x0000564d06b7354d legup::RAM::generateMIFContent(llvm::raw_fd_ostream&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 45
+12 llc             0x0000564d06c8bfd9 legup::VerilogWriter::printMIFFiles() + 1049
+13 llc             0x0000564d06c8c185 legup::VerilogWriter::printMemoryController() + 37
+14 llc             0x0000564d06c8c574 legup::VerilogWriter::print() + 484
+15 llc             0x0000564d06bfd877 legup::LegupPass::printVerilog(std::set<llvm::Function const*, std::less<llvm::Function const*>, std::allocator<llvm::Function const*> > const&) + 1031
+16 llc             0x0000564d06bfe8c3 legup::LegupPass::doFinalization(llvm::Module&) + 3091
+17 llc             0x0000564d079d718c llvm::legacy::PassManagerImpl::run(llvm::Module&) + 972
+18 llc             0x0000564d06b37380
+19 llc             0x0000564d06b19a20 main + 368
+20 libc.so.6       0x00007fef258ff09b __libc_start_main + 235
+21 llc             0x0000564d06b319ca _start + 42
+Stack dump:
+0.      Program arguments: ../../llvm/Release+Asserts/bin/llc -legup-config=../legup.tcl -march=v loop.bc -o loop.v
+make: *** [../Makefile.common:132: all] Aborted
+#+end_src
