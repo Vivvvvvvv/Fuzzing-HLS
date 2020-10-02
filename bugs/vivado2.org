@@ -49,7 +49,7 @@ gcc bug_driver.c bug.c -o bug_gcc
 
 #+RESULTS:
 #+begin_src sh
-checksum = 46535FF
+checksum = F
 #+end_src
 
 We then also need to provide a test bench for Vivado that will detect a mismatch between the Verilog simulation and C output.  This loads the file ~out.gold.txt~ and checks that the output is equivalent to the current result.
