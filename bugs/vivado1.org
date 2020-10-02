@@ -32,7 +32,7 @@ int main() { printf("checksum = %X\n", result()); }
 
 Then generate the golden output using GCC by compiling the driver with the initial bug and check the golden output.  This golden output is then written to ~out.gold.txt~.
 
-#+begin_src sh :exports both :results code
+#+begin_src sh :exports both :results code :tangle ./run_bug1.sh
 gcc bug1_driver.c bug1.c -o bug1_gcc
 ./bug1_gcc | tee out.gold.txt
 #+end_src
@@ -104,7 +104,7 @@ exit
 
 Then we can run the ~vivado_hls~ command to run Vivado HLS and check for the bug.
 
-#+begin_src sh :exports both :results code
+#+begin_src sh :exports both :results code :tangle ./run_bug1.sh
 vivado_hls -f vivado.tcl | tail -n24
 #+end_src
 
