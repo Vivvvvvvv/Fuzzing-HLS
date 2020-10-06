@@ -1,0 +1,125 @@
+#+title: Intel i++ Lite miscompilation bug
+#+author: Yann Herklotz
+
+The following C code was found to produce the wrong result in Intel i++ Lite.
+
+~./bug.c~
+#+begin_src c :tangle ./bug.c
+#include "HLS/hls.h"
+
+static volatile int32_t a[9][1][7];
+
+component int result() {
+  int tmp = 1;
+  for (int b = 0; b != 2; b++) {
+    a[0][0][0] = 3;
+    a[0][0][0] = a[0][0][0];
+  }
+  for (int i = 0; i < 9; i++)
+    for (int k = 0; k < 7; k++)
+      tmp ^= a[i][0][k];
+  return tmp;
+}
+
+int main() {
+  printf("%X\n", result());
+}
+#+end_src
+
+To reproduce the bug, we need the main Makefile that Intel provides in its examples to link against the right libraries when simulating the C code.
+
+~./Makefile~
+#+begin_src makefile :tangle ./Makefile
+SOURCE_FILES  := test_Mod.cpp
+HLS_CXX_FLAGS :=
+CXXFLAGS := -I/usr/include/x86_64-linux-gnu/c++/4.8
+CXX := i++
+override CXXFLAGS := $(CXXFLAGS) -Wno-c++11-narrowing
+VERBOSE := 1
+
+# OS-dependant tools
+ifeq ($(OS),Windows_NT)
+  RM  := rd /S /Q
+else
+  RM  := rm -rf
+endif
+
+ifeq ($(MAKECMDGOALS),)
+  $(info No target specified, defaulting to test-x86-64)
+  $(info Available targets: test-x86-64, test-fpga, test-gpp, clean)
+endif
+
+# Any tools installed with HLS can be found relative to the location of i++
+HLS_INSTALL_DIR := $(shell which i++ | sed 's|/bin/i++||g')
+
+# Run the i++ x86 test by default
+.PHONY: default
+default: test-x86-64
+
+# Compile the component and testbench using g++ and run them as a regular program
+.PHONY: test-gpp
+test-gpp: CXX := clang++
+test-gpp: CXXFLAGS := $(CXXFLAGS) -fsanitize=undefined -Werror -Wall -Wextra -Wno-unused-function -Wno-unused-variable -Wno-narrowing -Wno-unused-parameter -I"$(HLS_INSTALL_DIR)/include" -L"$(HLS_INSTALL_DIR)/host/linux64/lib" -lhls_emul -o test-gpp
+test-gpp: $(SOURCE_FILES)
+	$(CXX) $(SOURCE_FILES) $(CXXFLAGS)
+	@echo "+-------------------------------------+"
+	@echo "| Run ./test-gpp to execute the test. |"
+	@echo "+-------------------------------------+"
+
+# Run the testbench and the component as a regular program
+.PHONY: test-x86-64
+test-x86-64: CXXFLAGS := $(CXXFLAGS) $(HLS_CXX_FLAGS) -march=x86-64 -o test-x86-64
+test-x86-64: $(SOURCE_FILES)
+	$(CXX) $(SOURCE_FILES) $(CXXFLAGS)
+	@echo "+----------------------------------------+"
+	@echo "| Run ./test-x86-64 to execute the test. |"
+	@echo "+----------------------------------------+"
+
+# Run a simulation with the C testbench and verilog component
+.PHONY: test-fpga
+ifeq ($(VERBOSE),1)
+  test-fpga: CXXFLAGS := $(CXXFLAGS) -v
+endif
+test-fpga: CXXFLAGS := $(CXXFLAGS) $(HLS_CXX_FLAGS) -march=Arria10 -o test-fpga
+test-fpga: $(SOURCE_FILES)
+	$(CXX) $(SOURCE_FILES) $(CXXFLAGS)
+	@echo "+--------------------------------------+"
+	@echo "| Run ./test-fpga to execute the test. |"
+	@echo "+--------------------------------------+"
+
+# Clean up temprary and delivered files
+CLEAN_FILES := test-gpp \
+               test-gpp.prj \
+               test-fpga \
+               test-fpga.prj \
+               test-x86-64 \
+               test-x86-64.prj
+clean:
+	-$(RM) $(CLEAN_FILES)
+#+end_src
+
+Then the bug can be reproduced by running ~make~, which also runs ~vsim~ to simulate the produced Verilog.  First, we can generate the golden output for the C file.
+
+#+begin_src sh :tangle ./run_bug.sh :exports both :results code
+make test-gpp >make.log 2>&1
+./test-gpp >test-gpp.log 2>&1
+cat test-gpp.log
+#+end_src
+
+#+RESULTS:
+#+begin_src sh
+2
+#+end_src
+
+Then we can generate the actual output that Intel produces.
+
+#+begin_src sh :tangle ./run_bug.sh :exports both :results code
+make test-fpga >make.log 2>&1
+./test-fpga >test-fpga.log 2>&1
+cat test-fpga.log
+#+end_src
+
+#+RESULTS:
+#+begin_src sh
+0
+#+end_src
