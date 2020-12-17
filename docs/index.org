@@ -1,0 +1,11 @@
+#+title: Fuzzing HLS Bugs
+
+The following is a table of all the unique failing test cases that were found in the high-level synthesis tools.
+
+| Tool   | Bug Type       | Status              | Report |
+|--------+----------------+---------------------+--------|
+| Vivado | Miscompilation | Reported, Fixed     | [[file:vivado1.org][link]]   |
+| Vivado | Miscompilation | Reported, Not fixed | [[file:vivado2.org][link]]   |
+| LegUp  | Crash          |                     | [[file:legup3.org][link]]   |
+| LegUp  | Miscompilation |                     | [[file:legup4.org][link]]   |
+| Intel  | Miscompilation |                     | [[file:intel5.org][link]]   |

@@ -4,7 +4,7 @@
 The following C code was found to crash LegUp 4.0 and 7.5.
 
 ~./bug.c~
-#+begin_src c :tangle ./bug.c
+#+begin_src C :tangle ./bug.c
 int a[2][2][1] = {{{0},{1}},{{0},{0}}};
 
 int main() { a[0][1][0] = 1; }

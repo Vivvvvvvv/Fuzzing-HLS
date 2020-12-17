@@ -4,7 +4,7 @@
 The following C code was found to produce the wrong result in LegUp 4.0 and 7.5.
 
 ~./bug.c~
-#+begin_src c :tangle ./bug.c
+#+begin_src C :tangle ./bug.c
 volatile int a = 0;
 int b = 1;
 

@@ -4,7 +4,7 @@
 The following C code was found to produce the wrong result in Intel i++ Lite.
 
 ~./bug.c~
-#+begin_src c :tangle ./bug.c
+#+begin_src C :tangle ./bug.c
 #include "HLS/hls.h"
 
 static volatile int32_t a[9][1][7];

@@ -6,7 +6,7 @@ The following bug produces an error in Vivado HLS 2018.3, 2019.1 and 2019.2.
 To create the project layout, we can first create the ~./bug.c~ file which produces the bug.
 
 ~./bug.c~
-#+begin_src c :tangle ./bug.c
+#+begin_src C :tangle ./bug.c
 volatile unsigned int g = 0;
 int a[256] = {0};
 int c = 0;
@@ -32,7 +32,7 @@ int result() {
 We then have to generate a main function to provide the golden output.  We first write the following driver into ~./bug_driver.c~ which contains the main function that generates the checksum.
 
 ~./bug_driver.c~
-#+begin_src c :tangle ./bug_driver.c
+#+begin_src C :tangle ./bug_driver.c
 #include "stdio.h"
 
 int result();
@@ -55,7 +55,7 @@ checksum = F
 We then also need to provide a test bench for Vivado that will detect a mismatch between the Verilog simulation and C output.  This loads the file ~out.gold.txt~ and checks that the output is equivalent to the current result.
 
 ~./bug_tb.c~
-#+begin_src c :tangle ./bug_tb.c
+#+begin_src C :tangle ./bug_tb.c
 #include <stdio.h>
 
 unsigned int result();
