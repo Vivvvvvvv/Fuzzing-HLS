@@ -6,17 +6,19 @@
 (package-refresh-contents)
 (package-install 'org-plus-contrib)
 (package-install 'htmlize)
+(package-install 'solarized-theme)
 
 (require 'org)
 (require 'ox-publish)
 
-(defvar vericert/header "")
-(defvar vericert/site-attachments nil)
-(defvar vericert/base "")
+(load-theme 'solarized-light t)
+(defvar fuzzing-hls/header "")
+(defvar fuzzing-hls/site-attachments nil)
+(defvar fuzzing-hls/base "")
 
-(setq vericert/base "/fuzzing-hls")
+(setq fuzzing-hls/base "/fuzzing-hls")
 
-(setq vericert/site-attachments
+(setq fuzzing-hls/site-attachments
   (regexp-opt '("jpg" "jpeg" "gif" "png" "svg"
                 "ico" "cur" "css" "js" "woff" "woff2" "ttf"
                 "html" "pdf")))
@@ -42,26 +44,26 @@
 
 (setq org-publish-project-alist
       (list
-       (list "vericert-org"
+       (list "fuzzing-hls-org"
              :base-directory "./"
              :base-extension "org"
              :exclude (regexp-opt '("README" "draft"))
              :html-head-extra
-             (concat "<link rel=\"stylesheet\" href=\"" vericert/base "/css/org.css\" type=\"text/css\" media=\"screen\" />")
+             (concat "<link rel=\"stylesheet\" href=\"" fuzzing-hls/base "/css/org.css\" type=\"text/css\" media=\"screen\" />")
              :publishing-directory "./html"
              :publishing-function 'org-html-publish-to-html
              :recursive t)
-       (list "vericert-assets"
+       (list "fuzzing-hls-assets"
              :base-directory "."
-             :base-extension vericert/site-attachments
+             :base-extension fuzzing-hls/site-attachments
              :include '(".nojekyll")
              :exclude "html/"
              :publishing-directory "./html"
              :publishing-function 'org-publish-attachment
              :recursive t)
-       (list "vericert" :components '("vericert-org" "vericert-assets"))))
+       (list "fuzzing-hls" :components '("fuzzing-hls-org" "fuzzing-hls-assets"))))
 
-(defun publish-vericert-docs ()
-  "Publish Vericert documentation."
+(defun publish-fuzzing-hls-docs ()
+  "Publish Fuzzing-Hls documentation."
   (interactive)
-  (org-publish "vericert" t))
+  (org-publish "fuzzing-hls" t))
