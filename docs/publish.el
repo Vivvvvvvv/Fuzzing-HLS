@@ -10,8 +10,10 @@
 
 (require 'org)
 (require 'ox-publish)
+(require 'htmlize)
 
 (load-theme 'solarized-light t)
+
 (defvar fuzzing-hls/header "")
 (defvar fuzzing-hls/site-attachments nil)
 (defvar fuzzing-hls/base "")
