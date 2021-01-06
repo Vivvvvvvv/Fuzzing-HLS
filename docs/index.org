@@ -9,3 +9,4 @@ The following is a table of all the unique failing test cases that were found in
 | LegUp  | Crash          |                     | [[file:legup3.org][link]]   |
 | LegUp  | Miscompilation |                     | [[file:legup4.org][link]]   |
 | Intel  | Miscompilation |                     | [[file:intel5.org][link]]   |
+| Bambu  | Miscompilation |                     | [[file:bambu6.org][link]]   |
