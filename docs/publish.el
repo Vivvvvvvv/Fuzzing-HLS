@@ -40,7 +40,9 @@
       org-html-html5-fancy t
       org-html-validation-link nil
       org-html-doctype "html5"
-      org-html-coding-system 'utf-8-unix)
+      org-html-coding-system 'utf-8-unix
+      org-html-htmlize-output-type 'css
+      org-html-htmlize-font-prefix "org-")
 
 (setq org-publish-project-alist
       (list
