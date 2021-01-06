@@ -1,0 +1,90 @@
+#+title: Bambu shift and and bug
+#+author: Yann Herklotz
+
+The following C code should output ~0x100~ as ~b~ is just shifted to the right by 8.  However, in bambu it outputs 0.
+
+~./bug.c~
+#+begin_src C :tangle ./bug.c
+static int b = 0x10000;
+static volatile short a = 0;
+
+int result() {
+  a++;
+  b = (b >> 8) & 0x100;
+  return b;
+}
+#+end_src
+
+We can then generate two different files to run the bug with ~gcc~ and ~bambu~ respectively.
+
+~./main_gcc.c~
+#+begin_src C :tangle ./main_gcc.c
+#include "./bug.c"
+#include <stdio.h>
+
+int main () {
+    int res = result();
+    printf("checksum = %08X\n", res);
+    return 0;
+}
+#+end_src
+
+~./main_bambu.c~
+#+begin_src C :tangle ./main_bambu.c
+#include "test.c"
+
+int main () { return result(); }
+#+end_src
+
+For bambu we also need a test bench in verilog to execute the code:
+
+#+begin_src verilog :tangle ./tb.v
+module testbench;
+   reg clock, reset, start_port;
+   wire done_port;
+   wire [31:0] return_port;
+
+   main m(.clock(clock), .reset(reset), .start_port(start_port), .done_port(done_port), .return_port(return_port));
+
+   always #10 clock = ~clock;
+
+   initial begin
+      clock = 0;
+      reset = 0;
+      start_port = 0;
+      @(posedge clock) reset = 0;
+      @(posedge clock) reset = 1; start_port = 1;
+      @(posedge clock) start_port = 0;
+   end
+
+   always @(posedge clock)
+     if (done_port) begin
+        $display("checksum = %h", return_port);
+        $finish;
+     end
+
+endmodule
+#+end_src
+
+Finally, to reproduce the bug, one can run the following commands.
+
+#+begin_src sh :exports both :results code :tangle ./run_bug.sh
+gcc main_gcc.c -o main_gcc
+./main_gcc | tee out.gold.txt
+#+end_src
+
+#+RESULTS:
+#+begin_src sh
+checksum = 00000100
+#+end_src
+
+#+begin_src sh :exports both :results code :tangle ./run_bug.sh
+bambu main_bambu.c >bambu.log 2>&1
+iverilog top.v tb.v -o main_bambu
+./main_bambu | tee out.bambu.txt
+#+end_src
+
+#+RESULTS:
+#+begin_src sh
+checksum = 00000000
+#+end_src
