@@ -31,7 +31,7 @@ int main () {
 
 ~./main_bambu.c~
 #+begin_src C :tangle ./main_bambu.c
-#include "test.c"
+#include "./bug.c"
 
 int main () { return result(); }
 #+end_src
