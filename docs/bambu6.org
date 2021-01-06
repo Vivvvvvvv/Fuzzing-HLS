@@ -38,6 +38,7 @@ int main () { return result(); }
 
 For bambu we also need a test bench in verilog to execute the code:
 
+~./tb.v~
 #+begin_src verilog :tangle ./tb.v
 module testbench;
    reg clock, reset, start_port;
