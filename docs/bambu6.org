@@ -1,6 +1,10 @@
 #+title: Bambu shift and and bug
 #+author: Yann Herklotz
 
+| Reported | Fixed |
+|----------+-------|
+| [[https://github.com/ferrandi/PandA-bambu/issues/25][Issue]]    | X     |
+
 The following C code should output ~0x100~ as ~b~ is just shifted to the right by 8.  However, in bambu it outputs 0.
 
 ~./bug.c~
