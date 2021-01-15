@@ -23,7 +23,7 @@ int main() {
 
 However, Bambu seems to return 3 instead. In addition to that, if any of the loops are removed, the result will be correct for Bambu, even though the loops shouldn't affect the final result.
 
-I have uploaded a zipfile (testcase2.zip) with a script to rerun this testcase (run_single.sh). This was tested in the following version of Bambu:
+This was tested in the following version of Bambu:
 
 #+begin_src
 Version: PandA 0.9.7-dev - Revision 6f2d6eb92cb1507af12248a503ef39990d3d9c23-SROA_TCAD_release
