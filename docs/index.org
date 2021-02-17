@@ -11,3 +11,4 @@ The following is a table of all the unique failing test cases that were found in
 | Intel  | Miscompilation |                                 | [[file:intel5.org][link]]   |
 | Bambu  | Miscompilation | [[https://github.com/ferrandi/PandA-bambu/issues/25][reported]], confirmed, fixed      | [[file:bambu6.org][link]]   |
 | Bambu  | Miscompilation | [[https://github.com/ferrandi/PandA-bambu/issues/27][reported]], confirmed, workaround | [[file:bambu7.org][link]]   |
+| LegUp  | Crash          |                                 | [[file:legup8.org][link]]   |
