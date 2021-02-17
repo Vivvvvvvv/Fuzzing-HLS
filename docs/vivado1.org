@@ -1,6 +1,10 @@
 #+title: Vivado Shift Bug
 #+author: Yann Herklotz
 
+| Reported | Fixed |
+|----------+-------|
+| [[https://forums.xilinx.com/t5/High-Level-Synthesis-HLS/Issue-with-shift-in-for-loop/td-p/1170197][Issue]]    | X     |
+
 The following bug produces an error in Vivado HLS 2018.3, 2019.1 and 2019.2.
 
 To create the project layout, we can first create the ~./bug.c~ file which produces the bug.

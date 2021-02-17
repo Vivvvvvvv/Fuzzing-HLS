@@ -1,5 +1,9 @@
-#+title: Vivado Shift Bug
+#+title: Vivado Mismatch using volatile
 #+author: Yann Herklotz
+
+| Reported | Fixed |
+|----------+-------|
+| [[https://forums.xilinx.com/t5/High-Level-Synthesis-HLS/Mismatch-between-C-simulation-and-RTL-simulation-using-volatile/td-p/1170199][Issue]]    | X     |
 
 The following bug produces an error in Vivado HLS 2018.3, 2019.1 and 2019.2.
 
