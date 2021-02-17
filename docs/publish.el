@@ -42,7 +42,8 @@
       org-html-doctype "html5"
       org-html-coding-system 'utf-8-unix
       org-html-htmlize-output-type 'css
-      org-html-htmlize-font-prefix "org-")
+      org-html-htmlize-font-prefix "org-"
+      org-html-postamble nil)
 
 (setq org-publish-project-alist
       (list
