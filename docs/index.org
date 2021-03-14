@@ -8,7 +8,7 @@ The following is a table of all the unique failing test cases that were found in
 | Vivado | Miscompilation | [[https://forums.xilinx.com/t5/High-Level-Synthesis-HLS/Mismatch-between-C-simulation-and-RTL-simulation-using-volatile/td-p/1170199][reported]]                        | [[file:vivado2.org][link]]   |
 | LegUp  | Crash          | email report, confirmed         | [[file:legup3.org][link]]   |
 | LegUp  | Miscompilation | email report, confirmed         | [[file:legup4.org][link]]   |
-| Intel  | Miscompilation |                                 | [[file:intel5.org][link]]   |
+| Intel  | Miscompilation | [[https://community.intel.com/t5/Intel-High-Level-Design/Issue-compiling-code-with-volatile-3D-array-in-loop/m-p/1264218][reported]]                        | [[file:intel5.org][link]]   |
 | Bambu  | Miscompilation | [[https://github.com/ferrandi/PandA-bambu/issues/25][reported]], confirmed, fixed      | [[file:bambu6.org][link]]   |
 | Bambu  | Miscompilation | [[https://github.com/ferrandi/PandA-bambu/issues/27][reported]], confirmed, workaround | [[file:bambu7.org][link]]   |
 | LegUp  | Crash          |                                 | [[file:legup8.org][link]]   |
