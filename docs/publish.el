@@ -1,14 +1,17 @@
 ;; Publishing projects, this one is for the zettelkasten
 (require 'package)
 (package-initialize)
-(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
+(add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/") t)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-refresh-contents)
-(package-install 'org-plus-contrib)
+(package-install 'org)
+(package-install 'org-contrib)
 (package-install 'htmlize)
 (package-install 'solarized-theme)
 
 (require 'org)
+(require 'ox)
+(require 'ox-html)
 (require 'ox-publish)
 (require 'htmlize)
 
