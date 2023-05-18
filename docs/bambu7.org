@@ -1,0 +1,88 @@
+#+title: Issue with for loops affecting the final result
+
+| Reported | Fixed |
+|----------+-------|
+| [[https://github.com/ferrandi/PandA-bambu/issues/27][Issue]]    | X     |
+
+Considering the following test case, the result b should be equal to 10, because the result of the value assigned to b should be (j + 9) % 23 in each iteration of the loop, which gives 10 for the last iteration.
+
+~./bug.c~
+#+begin_src C :tangle ./bug.c
+#include <stdint.h>
+
+int main() {
+    int32_t b = 0;
+    int32_t a = 0;
+    for (int j = 0; j < 2; j++) {
+        for (int i = 0; i < 1; i++) a = 1;
+        b = a == 0 ? 0 : ((int64_t)(j + 9)) % 23;
+    }
+    return b;
+}
+#+end_src
+
+However, Bambu seems to return 3 instead. In addition to that, if any of the loops are removed, the result will be correct for Bambu, even though the loops shouldn't affect the final result.
+
+This was tested in the following version of Bambu:
+
+#+begin_src
+Version: PandA 0.9.7-dev - Revision 6f2d6eb92cb1507af12248a503ef39990d3d9c23-SROA_TCAD_release
+#+end_src
+
+* Running the testcase
+
+The following script reproduces the result mentioned above.
+
+~./run.sh~
+#+begin_src sh :tangle ./run.sh
+#!/bin/bash
+
+bambu test.c >bambu.log 2>&1
+iverilog top.v tb.v -o top
+./top >out.iverilog.txt
+result_bambu_hex=$(sed -E -e 's/checksum = ([0-9a-fA-F]+)/\1/' out.iverilog.txt)
+result_bambu=$(( 16#$result_bambu_hex ))
+
+gcc test.c -o test
+./test
+result_gcc=$?
+
+if [[ "$result_bambu" -eq "$result_gcc" ]]; then
+    echo "$result_bambu = $result_gcc"
+    exit 0
+else
+    echo "$result_bambu != $result_gcc"
+    exit 1
+fi
+#+end_src
+
+Using the following testbench.
+
+~./tb.v~
+#+begin_src verilog :tangle ./tb.v
+module testbench;
+   reg clock, reset, start_port;
+   wire done_port;
+   wire [31:0] return_port;
+
+   main m(.clock(clock), .reset(reset), .start_port(start_port), .done_port(done_port), .return_port(return_port));
+
+   always #10 clock = ~clock;
+
+   initial begin
+      clock = 0;
+      reset = 0;
+      start_port = 0;
+      @(posedge clock) reset = 0;
+      @(posedge clock) reset = 1; start_port = 1;
+      @(posedge clock) start_port = 0;
+   end
+
+   always @(posedge clock)
+     if (done_port) begin
+        $display("checksum = %h", return_port);
+        $finish;
+     end
+
+endmodule
+#+end_src

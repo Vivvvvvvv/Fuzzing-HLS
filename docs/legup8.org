@@ -1,0 +1,65 @@
+#+title: LegUp Crash 2
+#+author: Yann Herklotz
+
+The following C code was found to crash LegUp 4.0.
+
+~./bug.c~
+#+begin_src C :tangle ./bug.c
+#include <stdint.h>
+
+union U1 {
+   int16_t  f0;
+   volatile int8_t  f2;
+};
+
+static union U1 g_52[1][3] = {{{1},{0x1234},{1}}};
+
+int main() {
+    return g_52[0][1].f2 + g_52[0][1].f0;
+}
+#+end_src
+
+To reproduce the bug, it has to point to the main ~Makefile~ in the examples folder in LegUp (~LEGUP_EXAMPLES~).
+
+~./Makefile~
+#+begin_src makefile :tangle ./Makefile
+NAME := bug
+NO_INLINE := 1
+LEGUP_EXAMPLES := ..
+include $(LEGUP_EXAMPLES)/Makefile.common
+#+end_src
+
+Then the bug can be reproduced by running ~make~, which returns the following assertion error.
+
+#+begin_src sh :tangle ./run_bug.sh :exports both :results code
+make >/dev/null
+#+end_src
+
+#+RESULTS:
+#+begin_src sh
+llc: Ram.cpp:213: uint64_t legup::RAM::getConstantVal(const llvm::Constant*, unsigned int, uint64_t): Assertion `val >> (wordAlignedByteOffset * 8) == 0' failed.
+0  llc             0x0000563bb4f145b2 llvm::sys::PrintStackTrace(_IO_FILE*) + 34
+1  llc             0x0000563bb4f13da4
+2  libpthread.so.0 0x00007f0fa6fd8730
+3  libc.so.6       0x00007f0fa6a8f7bb gsignal + 267
+4  libc.so.6       0x00007f0fa6a7a535 abort + 289
+5  libc.so.6       0x00007f0fa6a7a40f
+6  libc.so.6       0x00007f0fa6a88102
+7  llc             0x0000563bb3fbc7bf legup::RAM::getConstantVal(llvm::Constant const*, unsigned int, unsigned long) + 447
+8  llc             0x0000563bb3fbc882 legup::RAM::visitConstant(llvm::Constant const*, unsigned long*, std::stack<llvm::Constant const*, std::deque<llvm::Constant const*, std::allocator<llvm::Constant const*> > >&, std::stack<unsigned int, std::deque<unsigned int, std::allocator<unsigned int> > >&, std::stack<unsigned int, std::deque<unsigned int, std::allocator<unsigned int> > >&, unsigned int&, unsigned int&) + 162
+9  llc             0x0000563bb3fc00b7 legup::RAM::initializeStruct() + 679
+10 llc             0x0000563bb3fc254d legup::RAM::generateMIFContent(llvm::raw_fd_ostream&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) + 45
+11 llc             0x0000563bb40dafd9 legup::VerilogWriter::printMIFFiles() + 1049
+12 llc             0x0000563bb40db185 legup::VerilogWriter::printMemoryController() + 37
+13 llc             0x0000563bb40db574 legup::VerilogWriter::print() + 484
+14 llc             0x0000563bb404c877 legup::LegupPass::printVerilog(std::set<llvm::Function const*, std::less<llvm::Function const*>, std::allocator<llvm::Function const*> > const&) + 1031
+15 llc             0x0000563bb404d8c3 legup::LegupPass::doFinalization(llvm::Module&) + 3091
+16 llc             0x0000563bb4e2618c llvm::legacy::PassManagerImpl::run(llvm::Module&) + 972
+17 llc             0x0000563bb3f86380
+18 llc             0x0000563bb3f68a20 main + 368
+19 libc.so.6       0x00007f0fa6a7c09b __libc_start_main + 235
+20 llc             0x0000563bb3f809ca _start + 42
+Stack dump:
+0.      Program arguments: ../../llvm/Release+Asserts/bin/llc -legup-config=../legup.tcl -march=v loop.bc -o loop.v
+make: *** [../Makefile.common:132: all] Aborted
+#+end_src

@@ -1,0 +1,58 @@
+#+title: LegUp Miscompilation
+#+author: Yann Herklotz
+
+The following C code was found to produce the wrong result in LegUp 4.0 and 7.5.
+
+~./bug.c~
+#+begin_src C :tangle ./bug.c
+volatile int a = 0;
+int b = 1;
+
+int main() {
+  int d = 1;
+  if (d + a)
+    b || 1;
+  else
+    b = 0;
+  return b;
+}
+#+end_src
+
+To reproduce the bug, it has to point to the main ~Makefile~ in the examples folder in LegUp (~LEGUP_EXAMPLES~).
+
+~./Makefile~
+#+begin_src makefile :tangle ./Makefile
+NAME := bug
+NO_OPT := 1
+LEGUP_EXAMPLES := ..
+include $(LEGUP_EXAMPLES)/Makefile.common
+#+end_src
+
+Then the bug can be reproduced by running ~make~, which also runs ~vsim~ to simulate the produced Verilog.
+
+#+begin_src sh :tangle ./run_bug.sh :exports both :results code
+make default v | tail -n6
+#+end_src
+
+#+RESULTS:
+#+begin_src
+# At t=              110000 clk=1 finish=1 return_val=         0
+# Cycles:                    3
+# ** Note: $finish    : loop.v(1015)
+#    Time: 110 ns  Iteration: 2  Instance: /main_tb
+# End time: 16:08:12 on Oct 02,2020, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 8
+#+end_src
+
+This shows that LegUp returns 0, however, the actual result that should be returned is 1, which can be verified with GCC.
+
+#+begin_src sh :tangle ./run_bug.sh :exports both :results code
+gcc ./bug.c -o bug
+./bug
+echo $?
+#+end_src
+
+#+RESULTS:
+#+begin_src sh
+1
+#+end_src

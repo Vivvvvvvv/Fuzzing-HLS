@@ -1,0 +1,141 @@
+#+title: Vivado Shift Bug
+#+author: Yann Herklotz
+
+| Reported | Fixed |
+|----------+-------|
+| [[https://forums.xilinx.com/t5/High-Level-Synthesis-HLS/Issue-with-shift-in-for-loop/td-p/1170197][Issue]]    | X     |
+
+The following bug produces an error in Vivado HLS 2018.3, 2019.1 and 2019.2.
+
+To create the project layout, we can first create the ~./bug.c~ file which produces the bug.
+
+~./bug.c~
+#+begin_src C :tangle ./bug.c
+unsigned int b = 0x1194D7FF;
+int a[6] = {1, 1, 1, 1, 1, 1};
+
+int result() {
+    for (int c = 0; c < 2; c++)
+        b = b >> a[c];
+    return b;
+}
+#+end_src
+
+The program repeatedly shifts a large integer value ~b~ right by the values stored in array ~a~.  Vivado HLS returns ~0x006535FF~, but the result returned by GCC (and subsequently confirmed manually to be the correct one) is ~0x046535FF~.
+
+We then have to generate a main function to provide the golden output.  We first write the following driver into ~./bug_driver.c~ which contains the main function that generates the checksum.
+
+~./bug_driver.c~
+#+begin_src C :tangle ./bug_driver.c
+#include "stdio.h"
+
+int result();
+
+int main() { printf("checksum = %X\n", result()); }
+#+end_src
+
+Then generate the golden output using GCC by compiling the driver with the initial bug and check the golden output.  This golden output is then written to ~out.gold.txt~.
+
+#+begin_src sh :exports both :results code :tangle ./run_bug.sh
+gcc bug_driver.c bug.c -o bug_gcc
+./bug_gcc | tee out.gold.txt
+#+end_src
+
+#+RESULTS:
+#+begin_src sh
+checksum = 46535FF
+#+end_src
+
+We then also need to provide a test bench for Vivado that will detect a mismatch between the Verilog simulation and C output.  This loads the file ~out.gold.txt~ and checks that the output is equivalent to the current result.
+
+~./bug_tb.c~
+#+begin_src C :tangle ./bug_tb.c
+#include <stdio.h>
+
+unsigned int result();
+
+int main () {
+  FILE *fp;
+  FILE *fp1;
+  unsigned int resultOut;
+  char str[1000];
+  fp=fopen("out.txt","w");
+  fp1=fopen("out.gold.txt", "r");
+
+  resultOut = result();
+  printf("Verilog result is %X\n", resultOut);
+  printf("C output:");
+  while (fgets(str, 1000, fp1) != NULL) printf("%s", str);
+  fprintf(fp,"checksum = %X\n",resultOut);
+
+  fclose(fp);
+  fclose(fp1);
+
+  printf ("Comparing against output data \n");
+
+  if (system("diff -w out.txt out.gold.txt")) {
+    fprintf(stdout, "*******************************************\n");
+    fprintf(stdout, "FAIL: Output DOES NOT match the golden output\n");
+    fprintf(stdout, "*******************************************\n");
+    return 1;
+  } else {
+    fprintf(stdout, "*******************************************\n");
+    fprintf(stdout, "PASS: The output matches the golden output!\n");
+    fprintf(stdout, "*******************************************\n");
+    return 0;
+  }
+}
+#+end_src
+
+Finally, we create the ~tcl~ file to create the Vivado project and include all the relevant source files.
+
+~./vivado.tcl~
+#+begin_src tcl :tangle ./vivado.tcl
+open_project -reset bug
+set_top result
+add_files bug.c
+add_files -tb out.gold.txt
+add_files -tb bug_tb.c
+open_solution -reset "solution1"
+set_part {xc7z020-clg484-1}
+create_clock -period 10 -name default
+csynth_design
+csim_design
+cosim_design
+export_design -format ip_catalog
+exit
+#+end_src
+
+Then we can run the ~vivado_hls~ command to run Vivado HLS and check for the bug.
+
+#+begin_src sh :exports both :results code :tangle ./run_bug.sh
+vivado_hls -f vivado.tcl | tail -n24
+#+end_src
+
+#+RESULTS:
+#+begin_src sh
+INFO: [Common 17-206] Exiting xsim at Fri Oct  2 16:10:49 2020...
+INFO: [COSIM 212-316] Starting C post checking ...
+1c1
+< checksum = 6535FF
+---
+> checksum = 46535FF
+Verilog result is 6535FF
+C output:checksum = 46535FF
+Comparing against output data
+,*******************************************
+FAIL: Output DOES NOT match the golden output
+,*******************************************
+ERROR: [COSIM 212-361] C TB post check failed, nonzero return value '1'.
+ERROR: [COSIM 212-4] *** C/RTL co-simulation finished: FAIL ***
+INFO: [COSIM 212-211] II is measurable only when transaction number is greater than 1 in RTL simulation. Otherwise, they will be marked as all NA. If user wants to calculate them, please make sure there are at least 2 transactions in RTL simulation.
+command 'ap_source' returned error code
+    while executing
+"source vivado.tcl"
+    ("uplevel" body line 1)
+    invoked from within
+"uplevel \#0 [list source $arg] "
+
+INFO: [HLS 200-112] Total elapsed time: 42.76 seconds; peak allocated memory: 80.380 MB.
+INFO: [Common 17-206] Exiting vivado_hls at Fri Oct  2 16:10:49 2020...
+#+end_src
