@@ -11,7 +11,7 @@ expected result is =1=, however, Catapult C with the following example outputs
 =0xffffffff= (=-1= if interpreted as signed).
 
 =./bug.cpp=
-#+begin_src C++ :tangle ./bug.cpp
+#+begin_src cpp :tangle ./bug.cpp
   #include <stdint.h>
   #pragma hls_design top
   uint32_t result() {
@@ -24,7 +24,7 @@ The above might be a compiler specific behaviour, however, when the following is
 passed to Catapult C, which just inlines the value of =a= into the operation,
 Catapult C agrees with GCC and outputs =1=.
 
-#+begin_src C++
+#+begin_src cpp
   #include <stdint.h>
   #pragma hls_design top
   uint32_t result() {
@@ -79,7 +79,7 @@ reference compiler.
 #+end_src
 
 =main.cpp=
-#+begin_src C++ :tangle ./main.cpp
+#+begin_src cpp :tangle ./main.cpp
   #include "bug.cpp"
   #include <cstdio>
 
