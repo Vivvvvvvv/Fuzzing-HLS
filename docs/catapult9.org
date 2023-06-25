@@ -1,0 +1,139 @@
+#+title: Catapult C simulation mismatch
+#+author: Yann Herklotz
+
+The following bug was found in Catapult C 2020.
+
+* Description of bug
+
+The following code produces the wrong result when compiled with Catapult C 2020.
+This is just a modulo operation with a negative right-hand side number.  The
+expected result is =1=, however, Catapult C with the following example outputs
+=0xffffffff= (=-1= if interpreted as signed).
+
+=./bug.cpp=
+#+begin_src C++ :tangle ./bug.cpp
+  #include <stdint.h>
+  #pragma hls_design top
+  uint32_t result() {
+      int32_t a = -7;
+      return 1 % a;
+  }
+#+end_src
+
+The above might be a compiler specific behaviour, however, when the following is
+passed to Catapult C, which just inlines the value of =a= into the operation,
+Catapult C agrees with GCC and outputs =1=.
+
+#+begin_src C++
+  #include <stdint.h>
+  #pragma hls_design top
+  uint32_t result() {
+      return 1 % (-7);
+  }
+#+end_src
+
+When looking at the hardware, no modulo operation is actually performed, meaning
+this is just an analysis issue with Catapult C which computes the constant value
+that should be returned.  In the first case, Catapult C incorrectly generates a
+constant that is always returned which contains =0xffffffff=:
+
+#+begin_src verilog
+  ccs_out_v1 #(.rscid(32'sd1),
+  .width(32'sd32)) return_rsci (
+      .idat(32'b11111111111111111111111111111111),
+      .dat(return_rsc_dat)
+    );
+#+end_src
+
+Whereas in the second case it generates a constant with the right value:
+
+#+begin_src verilog
+  ccs_out_v1 #(.rscid(32'sd1),
+  .width(32'sd32)) return_rsci (
+      .idat(32'b00000000000000000000000000000001),
+      .dat(return_rsc_dat)
+    );
+#+end_src
+
+* Reproduction
+
+The following files are necessary to reproduce the bug, using =GCC= as the
+reference compiler.
+
+=bug.tcl=
+#+begin_src tcl :tangle ./run.tcl
+  go new
+  solution file add ./bug.cpp
+  go analyze
+  go compile
+  solution library add mgc_Xilinx-VIRTEX-7-2_beh -- -rtlsyntool Vivado -manufacturer Xilinx -family VIRTEX-7 -speed -2 -part xc7vx485tffg1157-2
+  solution library add Xilinx_RAMS
+  solution library add Xilinx_ROMS
+  solution library add Xilinx_FIFO
+  go libraries
+  directive set -CLOCKS {clk {-CLOCK_PERIOD 10 -CLOCK_EDGE rising -CLOCK_HIGH_TIME 5 -CLOCK_OFFSET 0.000000 -CLOCK_UNCERTAINTY 0.0 -RESET_KIND sync -RESET_SYNC_NAME rst -RESET_SYNC_ACTIVE high -RESET_ASYNC_NAME arst_n -RESET_ASYNC_ACTIVE low -ENABLE_NAME {} -ENABLE_ACTIVE high}}
+  directive set -SCHED_USE_MULTICYCLE true
+  go assembly
+  go allocate
+  go extract
+#+end_src
+
+=main.cpp=
+#+begin_src C++ :tangle ./main.cpp
+  #include "bug.cpp"
+  #include <cstdio>
+
+  int main() {
+      uint32_t crc = result();
+      printf ("checksum = %08x\n", crc);
+  }
+#+end_src
+
+=run_bug.sh=
+#+begin_src sh :tangle ./run_bug.sh :exports both :results code
+  gcc main.cpp -o test_gcc && ./test_gcc >out.gold.txt
+
+  rm -rf Catapult >/dev/null 2>&1
+  catapult -shell -file run.tcl >/dev/null
+  cp Catapult/result.v1/concat_sim_rtl.v result.v
+  iverilog -o out.ver result.v tb.v
+  ./out.ver | head -n1 >out.sim.txt
+
+  diff out.gold.txt out.sim.txt
+#+end_src
+
+#+RESULTS:
+#+begin_src sh
+1c1
+< checksum = 00000001
+---
+> checksum = ffffffff
+#+end_src
+
+=tb.v=
+#+begin_src verilog :tangle tb.v
+  module testbench();
+    reg rst, clk;
+    wire [31:0] return;
+    wire rdy;
+
+    result result_dat(clk, rst, return, rdy);
+
+    initial begin
+      rst = 1;
+      clk = 0;
+      #10
+      rst = 0;
+    end
+
+    always #5 clk = ~clk;
+
+    always @(posedge clk) begin
+      if (rdy) begin
+        $display("checksum = %08h", return);
+        $finish();
+      end
+    end
+
+  endmodule
+#+end_src
