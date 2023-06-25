@@ -13,8 +13,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install emacs
-      run: sudo add-apt-repository ppa:kelleyk/emacs && sudo apt-get update && sudo apt-get install emacs27
+    - uses: purcell/setup-emacs@master
+      with:
+        version: 27.2
 
     - name: Generate documentation
       run: cd docs && emacs --batch --no-init --load publish.el --funcall org-publish-all
